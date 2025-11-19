@@ -1,6 +1,9 @@
 ﻿using System.Threading.Tasks;
+using System.Net.Http;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Configuration;
+using System.Text.Json;
+using System.Collections.Generic;
 
 public class VisualCrossingWeatherProvider : IWeatherProvider
 {
@@ -32,8 +35,7 @@ public class VisualCrossingWeatherProvider : IWeatherProvider
     {
         if (string.IsNullOrWhiteSpace(_baseUrl) || string.IsNullOrWhiteSpace(_apiKey))
         {
-            // Config not set, we can't call the real API.
-            // For now just return a fake value.
+            // Config not set → fallback
             return new WeatherResponse(
                 City: city,
                 TemperatureC: 25,
@@ -41,10 +43,6 @@ public class VisualCrossingWeatherProvider : IWeatherProvider
                 Summary: "Sunny (config missing, fallback hardcoded)"
             );
         }
-
-        // Build Visual Crossing URL:
-        // Example timeline endpoint:
-        // {baseUrl}/{city}?unitGroup=metric&key={apiKey}&contentType=json
 
         var url = $"{_baseUrl}/{Uri.EscapeDataString(city)}?unitGroup=metric&key={_apiKey}&contentType=json";
 
@@ -59,7 +57,6 @@ public class VisualCrossingWeatherProvider : IWeatherProvider
         catch (Exception ex)
         {
             Console.WriteLine($"Error calling Visual Crossing API: {ex.Message}");
-            // On network error, we return null to let the service handle it.
             return null;
         }
 
@@ -69,18 +66,91 @@ public class VisualCrossingWeatherProvider : IWeatherProvider
             return null;
         }
 
-        // For NOW: just read the raw JSON and log it.
         var rawJson = await httpResponse.Content.ReadAsStringAsync();
-        Console.WriteLine("Raw response from Visual Crossing:");
-        Console.WriteLine(rawJson);
 
-        // TODO: parse JSON properly and map to WeatherResponse.
-        // For now, return a dummy response so the API works.
+        //saving the json file
+        using var jsonDoc = JsonDocument.Parse(rawJson);
+        var saveOptions = new JsonSerializerOptions { WriteIndented = true };
+        string prettyJson = JsonSerializer.Serialize(jsonDoc.RootElement, saveOptions);
+
+        // Save to file
+        string filePath = "visualcrossing_response.json";
+        await File.WriteAllTextAsync(filePath, prettyJson);
+
+        Console.WriteLine($"✅ JSON saved to {filePath}");
+
+        // --- NEW: parse the JSON into our DTO ---
+
+        VisualCrossingResponseDto? data;
+        try
+        {
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            data = JsonSerializer.Deserialize<VisualCrossingResponseDto>(rawJson, options);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to deserialize Visual Crossing JSON: {ex.Message}");
+            return null;
+        }
+
+        if (data is null)
+        {
+            Console.WriteLine("Deserialized Visual Crossing response is null.");
+            return null;
+        }
+
+        // Pick temperature (Celsius) and conditions:
+        // 1) Prefer currentConditions.temp, 2) fall back to first day.temp
+        double? tempCSource = data.CurrentConditions?.Temp
+                              ?? data.Days?.FirstOrDefault()?.Temp;
+
+        if (tempCSource is null)
+        {
+            Console.WriteLine("Could not find temp in Visual Crossing response.");
+            return null;
+        }
+
+        int tempC = (int)Math.Round(tempCSource.Value);
+
+        // Compute Fahrenheit from Celsius (like in your WeatherForecast)
+        int tempF = 32 + (int)(tempC / 0.5556);
+
+        string summary = data.CurrentConditions?.Conditions
+                          ?? data.Days?.FirstOrDefault()?.Conditions
+                          ?? "No description";
+
+        string resolvedCity = data.ResolvedAddress ?? city;
+
         return new WeatherResponse(
-            City: city,
-            TemperatureC: 20,
-            TemperatureF: 68,
-            Summary: "Dummy data from VisualCrossing (JSON not parsed yet)"
+            City: resolvedCity,
+            TemperatureC: tempC,
+            TemperatureF: tempF,
+            Summary: summary
         );
     }
+}
+
+// Internal DTOs for deserializing Visual Crossing response
+file class VisualCrossingResponseDto
+{
+    public string? ResolvedAddress { get; set; }
+    public CurrentConditionsDto? CurrentConditions { get; set; }
+    public DayDto[]? Days { get; set; }
+}
+
+file class CurrentConditionsDto
+{
+    public double? Temp { get; set; }
+    public string? Conditions { get; set; }
+}
+
+file class DayDto
+{
+    public string? Datetime { get; set; }
+    public double? Temp { get; set; }
+    public string? Conditions { get; set; }
 }

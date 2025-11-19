@@ -1,8 +1,6 @@
 ﻿using System.Threading.Tasks;
 public class WeatherService
 {
-    private readonly string _baseUrl;
-    private readonly string _apiKey;
     private readonly IWeatherProvider _weatherProvider;
 
     public WeatherService(IConfiguration configuration, IWeatherProvider weatherProvider)
