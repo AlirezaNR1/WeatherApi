@@ -5,6 +5,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 
 builder.Services.AddScoped<WeatherService>();
+builder.Services.AddScoped<IWeatherProvider, VisualCrossingWeatherProvider>();
 
 var app = builder.Build();
 
@@ -35,9 +36,9 @@ app.MapGet("/weatherforecast", () =>
 })
 .WithName("GetWeatherForecast");
 
-app.MapGet("/weather/{city}", (string city, WeatherService weatherService) =>
+app.MapGet("/weather/{city}", async (string city, WeatherService weatherService) =>
 {
-    var response = weatherService.GetCurrentWeather(city);
+    var response = await weatherService.GetCurrentWeatherAsync(city);
     return Results.Ok(response);
 }).WithName("GetWeatherForCity");
 
@@ -48,4 +49,4 @@ record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
 
-public record WeatherResponse(string City, int TemperatureC, int TemperatureF, string Summery);
+public record WeatherResponse(string City, int TemperatureC, int TemperatureF, string Summary);
