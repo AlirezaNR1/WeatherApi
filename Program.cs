@@ -5,7 +5,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 
 builder.Services.AddScoped<WeatherService>();
-builder.Services.AddScoped<IWeatherProvider, VisualCrossingWeatherProvider>();
+builder.Services.AddHttpClient<IWeatherProvider, VisualCrossingWeatherProvider>();
 
 var app = builder.Build();
 

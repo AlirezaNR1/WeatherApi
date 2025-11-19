@@ -1,9 +1,17 @@
 ﻿using System.Threading.Tasks;
-
+using System.Runtime.CompilerServices;
 public class VisualCrossingWeatherProvider : IWeatherProvider
 {
+    private readonly HttpClient _httpClient;
+
+    public VisualCrossingWeatherProvider(HttpClient httpClient)
+    {
+        _httpClient = httpClient;  
+    }
+
     public Task<WeatherResponse?> GetCurrentWeatherAsync(string city)
     {
+        
         // For now this is just fake/hardcoded data.
         // Later we'll call the real Visual Crossing API here.
 
