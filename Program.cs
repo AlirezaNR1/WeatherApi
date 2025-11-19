@@ -4,6 +4,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+builder.Services.AddScoped<WeatherService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -33,15 +35,9 @@ app.MapGet("/weatherforecast", () =>
 })
 .WithName("GetWeatherForecast");
 
-app.MapGet("/weather/{city}", (string city) =>
+app.MapGet("/weather/{city}", (string city, WeatherService weatherService) =>
 {
-    var response = new WeatherResponse(
-        City: city,
-        TemperatureC: 15,
-        TemperatureF: 50,
-        Summery: "Cold AF"
-    );
-
+    var response = weatherService.GetCurrentWeather(city);
     return Results.Ok(response);
 }).WithName("GetWeatherForCity");
 
