@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
-
+using System;
 public class WeatherService
 {
     private readonly IWeatherProvider _weatherProvider;
@@ -25,11 +25,10 @@ public class WeatherService
 
         // 1) Try cache first
         if (_memoryCache.TryGetValue(cacheKey, out WeatherResponse cached))
-        {
+        { 
             Console.WriteLine($"[CACHE HIT] {cacheKey}");
             return cached;
         }
-
         Console.WriteLine($"[CACHE MISS] {cacheKey} – calling provider");
 
         //call provider
@@ -37,7 +36,7 @@ public class WeatherService
 
         if (response is null)
         {
-            throw new Exception($"Weather data not found for city '{city}'.");
+            throw new WeatherNotFoundException(city);
         }
 
         // 3) Store in cache with TTL (e.g. 30 minutes or 12 hours)
@@ -50,4 +49,13 @@ public class WeatherService
 
         return response;
     }
+
+    public class WeatherNotFoundException : Exception {
+        public WeatherNotFoundException(string city)
+            : base($"Weather data not found for city '{city}'.")
+        { 
+        }
+    }
+
+
 }
