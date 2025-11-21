@@ -50,12 +50,12 @@ public class WeatherService
         return response;
     }
 
-    public class WeatherNotFoundException : Exception {
-        public WeatherNotFoundException(string city)
-            : base($"Weather data not found for city '{city}'.")
-        { 
-        }
+
+}
+
+public class WeatherNotFoundException : Exception {
+    public WeatherNotFoundException(string city)
+        : base($"Weather data not found for city '{city}'.")
+    { 
     }
-
-
 }
