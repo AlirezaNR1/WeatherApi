@@ -4,10 +4,8 @@ using Microsoft.AspNetCore.RateLimiting;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-// Rate limiting: 60 requests per minute per IP for weather endpoints
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -31,7 +29,6 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0
             }));
 });
-
 
 builder.Services.AddMemoryCache();  
 

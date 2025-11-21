@@ -18,8 +18,7 @@ public class WeatherService
         {
             throw new ArgumentException("City is required.", nameof(city));
         }
-
-        // Normalize city for cache key (case-insensitive)
+        
         var normalizedCity = city.Trim().ToLowerInvariant();
         var cacheKey = $"weather:{normalizedCity}";
 
@@ -31,7 +30,7 @@ public class WeatherService
         }
         Console.WriteLine($"[CACHE MISS] {cacheKey} – calling provider");
 
-        //call provider
+        // 2) call provider
         var response = await _weatherProvider.GetCurrentWeatherAsync(city);
 
         if (response is null)
@@ -39,7 +38,7 @@ public class WeatherService
             throw new WeatherNotFoundException(city);
         }
 
-        // 3) Store in cache with TTL (e.g. 30 minutes or 12 hours)
+        // 3) Store in cache with TTL (12 hours)
         var cacheEntryOptions = new MemoryCacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(12)

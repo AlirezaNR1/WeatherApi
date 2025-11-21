@@ -68,7 +68,7 @@ public class VisualCrossingWeatherProvider : IWeatherProvider
 
         var rawJson = await httpResponse.Content.ReadAsStringAsync();
 
-        //saving the json file
+        //modifying the json file
         using var jsonDoc = JsonDocument.Parse(rawJson);
         var saveOptions = new JsonSerializerOptions { WriteIndented = true };
         string prettyJson = JsonSerializer.Serialize(jsonDoc.RootElement, saveOptions);
@@ -79,8 +79,7 @@ public class VisualCrossingWeatherProvider : IWeatherProvider
 
         Console.WriteLine($"✅ JSON saved to {filePath}");
 
-        // --- NEW: parse the JSON into our DTO ---
-
+        // parse the JSON into DTO
         VisualCrossingResponseDto? data;
         try
         {
